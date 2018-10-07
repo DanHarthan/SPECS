@@ -22,7 +22,7 @@ function varargout = command_engine_comp(varargin)
 
 % Edit the above text to modify the response to help command_engine_comp
 
-% Last Modified by GUIDE v2.5 07-Oct-2018 09:56:30
+% Last Modified by GUIDE v2.5 07-Oct-2018 10:09:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,8 +74,8 @@ varargout{1} = handles.output;
 
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function starter_motor_throttle_slider_Callback(hObject, eventdata, handles)
+% hObject    handle to starter_motor_throttle_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -84,8 +84,8 @@ function slider1_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function starter_motor_throttle_slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to starter_motor_throttle_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -95,36 +95,36 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-% --- Executes on button press in togglebutton1.
-function togglebutton1_Callback(hObject, eventdata, handles)
-% hObject    handle to togglebutton1 (see GCBO)
+% --- Executes on button press in starter_motor_power_button.
+function starter_motor_power_button_Callback(hObject, eventdata, handles)
+% hObject    handle to starter_motor_power_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of togglebutton1
+% Hint: get(hObject,'Value') returns toggle state of starter_motor_power_button
 
 
-% --- Executes on button press in togglebutton2.
-function togglebutton2_Callback(hObject, eventdata, handles)
-% hObject    handle to togglebutton2 (see GCBO)
+% --- Executes on button press in solinoid_valve_power_button.
+function solinoid_valve_power_button_Callback(hObject, eventdata, handles)
+% hObject    handle to solinoid_valve_power_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of togglebutton2
+% Hint: get(hObject,'Value') returns toggle state of solinoid_valve_power_button
 
 
-% --- Executes on button press in togglebutton3.
-function togglebutton3_Callback(hObject, eventdata, handles)
-% hObject    handle to togglebutton3 (see GCBO)
+% --- Executes on button press in fuel_pump_power_button.
+function fuel_pump_power_button_Callback(hObject, eventdata, handles)
+% hObject    handle to fuel_pump_power_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of togglebutton3
+% Hint: get(hObject,'Value') returns toggle state of fuel_pump_power_button
 
 
 % --- Executes on slider movement.
-function slider2_Callback(hObject, eventdata, handles)
-% hObject    handle to slider2 (see GCBO)
+function fuel_pump_throttle_slider_Callback(hObject, eventdata, handles)
+% hObject    handle to fuel_pump_throttle_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -133,8 +133,8 @@ function slider2_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider2 (see GCBO)
+function fuel_pump_throttle_slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to fuel_pump_throttle_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
