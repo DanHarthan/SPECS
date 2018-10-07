@@ -1,11 +1,11 @@
 #include  <Wire.h>
 
-int EGTsense = A2;
-int FPpin = 9;
-int RPMsense = 5;
-int STRpin = 6;
-int FVpin = 8;
-volatile int RPMcmdin = 0;
+int EGTsense = A2; //Analog EGT reading needs calibration, sim with trimpot
+int FPpin = 9;     //Fuel Pump Run pin
+int RPMsense = 5;  //RPM sense input pin
+int STRpin = 6;    //Starter Run Pin
+int FVpin = 8;     //Fuel Valve enable / disable
+volatile int RPMcmdin = 0; //Command input from ECU, used in Start/Run functions
 
 void setup() {
   Wire.begin(8);                // join i2c bus with address #8
@@ -32,7 +32,7 @@ void loop() {
   
 }
 
-// Request RPM, EGT, CMD values from ECM
+// Collects and sends RPM, EGT, CMD values from ECM to ECU
 void requestEvent() {
   int rpm = GetRPM();  
   byte RPMarray[3];
@@ -59,9 +59,9 @@ void receiveEvent(int howMany) {
   analogWrite(FPpin, RPMcmdin);      
 }
 
+// Rough start sequence, needs work with fuel pump and handoff to RUN function
 void StartSEQ(){
   //RUNstarter(int); FUELvalve(int); RUNfuel(int);
-  
   RUNstarter(77); //Start the engine at 2500 RPM
   FUELvalve(1); //This will be the pilot light fuel solenoid on the real system.
   RUNfuel(15); // Start the fuel pump to push just a little fuel through the ignition system
@@ -72,7 +72,7 @@ void StartSEQ(){
         RUNstarter(120);
           for(int j = 15; j < 100; j++){ //ramp up the fuel pump slowly
             RUNfuel(j);
-            delay(50);
+            delay(50); //ramp rate delay
           }
           RUNfuel(100);
           RUNstarter(70);          
@@ -100,22 +100,22 @@ void ShutdownSEQ(){
   }
 }
 
+// Only measures HIGH pulse width and sends value back to ECU for computation. 
+// This requires 3 bytes, and is minimum load on processor.
 int GetRPM(){
   unsigned long PWH = pulseIn(RPMsense,HIGH);
-  Serial.print(PWH);
-  Serial.print("\n");
-  unsigned long PWL = pulseIn(RPMsense,LOW);
-  Serial.print(PWL);
-  Serial.print("\n");
   return(PWH);
 }
 
+// Reads Thermocouple value. Will need calibration with real sensor at some point.
+// If using k-type, use linear mapping requires component selections and testing
 int GetEGT(){
   int measure = analogRead(EGTsense);
   int egt = map(measure, 0, 1023, 0, 255);
   return (egt);
 }
 
+// Run values need to be calibrated at 8.4V, need min 10A supply.
 int RUNstarter(int STRin){
   //2500RPM = 77PWM, 5000RPM = 120PWM Heating of motor is a concern at 12.6V
   analogWrite(STRpin, STRin);
