@@ -149,6 +149,19 @@ function connect_to_arduino_button_Callback(hObject, eventdata, handles)
 % hObject    handle to connect_to_arduino_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+clear a;
+try
+    a = arduino; %creates a serial connection to an 
+    handles.a = a;
+    configurePin(a,'D13','Unset');
+    light = readDigitalPin(a,'D13');
+    configurePin(a,'D13','Unset');
+    handles.light = light;
+    guidata(hObject,handles);
+catch
+    clear a;
+    handles.a = 'Unsuccessful';
+end
 
 
 % --- Executes on button press in disconnect_from_arduino_button.
