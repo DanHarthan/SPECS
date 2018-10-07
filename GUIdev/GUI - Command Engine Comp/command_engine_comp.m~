@@ -60,11 +60,11 @@ guidata(hObject, handles);
 
 % UIWAIT makes command_engine_comp wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-delete(instrfind({'Port'},{'COM3'})) %clears com ports defined for arduino.
+delete(instrfind({'Port'},{'COM3'}))
 clear a;
-global a; %define as global variable for use in other functions
-a = arduino('COM3'); %establish serial connection with arduino, com port.
-a.pinMode(8, 'output'); %define output pins
+global a;
+a = arduino('COM3');
+a.pinMode(
 
 
 % --- Outputs from this function are returned to the command line.
