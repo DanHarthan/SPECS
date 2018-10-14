@@ -1,11 +1,13 @@
 #include  <Wire.h>
 
 int EGTsense = A2; //Analog EGT reading needs calibration, sim with trimpot
-int FPpin = 9;     //Fuel Pump Run pin
+int FPpin = 3;  //Fuel Pump Run pin
 int RPMsense = 5;  //RPM sense input pin
-int STRpin = 6;    //Starter Run Pin
+int STRpin = 9;    //Starter Run Pin
 int FVpin = 8;     //Fuel Valve enable / disable
+int IGpin = 12;
 volatile int RPMcmdin = 0; //Command input from ECU, used in Start/Run functions
+volatile int RUNStatus = 0; // Global volatile system run status. 0 = OFF, 1 = START, 2 = RUN, 3 = SHUTDOWN
 
 void setup() {
   Wire.begin(8);                // join i2c bus with address #8
@@ -16,25 +18,21 @@ void setup() {
   pinMode(EGTsense,INPUT);
   pinMode(RPMsense, INPUT_PULLUP);
   pinMode(FVpin, OUTPUT);
+  pinMode(IGpin, OUTPUT);
   Serial.begin(9600);
 }
 
 void loop() {
-  //RUNstarter(int); FUELvalve(int); RUNfuel(int)
+  //Starter(int); FUELvalve(int); FuelPump(int); Ignition(int)
+  //StartSEQ(); ShutdownSEQ();
   //StartSEQ();
-  RUNstarter(100);
-  delay(5000);
-  RUNstarter(150);
-  delay(5000);
-  //ShutdownSEQ();
-  RUNstarter(0);
-  delay(30000);
-  
+  //delay(30000);
+  RUNStatus = 0;
 }
 
 // Collects and sends RPM, EGT, CMD values from ECM to ECU
 void requestEvent() {
-  int rpm = GetRPM();  
+  unsigned long rpm = GetRPM();  
   byte RPMarray[3];
   RPMarray[0] = (rpm >> 16) & 0xFF;
   RPMarray[1] = (rpm >> 8) & 0xFF;
@@ -48,56 +46,60 @@ void requestEvent() {
 
 // Receive RPM or Start command from ECU, Start or change program RPM setpoint
 void receiveEvent(int howMany) {
-  while (1 < Wire.available()) { // loop through all but the last
-    char c = Wire.read(); // receive byte as a character
-    if (c == 's'){
-      StartSEQ();
-    }
+  Serial.print("Run Status:");
+  Serial.print(RUNStatus);
+  Serial.print("CMD in:");
+  Serial.print(RPMcmdin);
+  int RPMcmdinH = Wire.read();    // receive byte as an integer
+  int RPMcmdinL = Wire.read();    // receive byte as an integer
+  RPMcmdin = (RPMcmdinH<<8)|RPMcmdinL;
+  if (RUNStatus == 0){
+      StartSEQ(); 
+  }else if (RUNStatus == 2){
+      analogWrite(STRpin, RPMcmdin);    //will change to fuel pin for real operation 
   }
-
-  RPMcmdin = Wire.read();    // receive byte as an integer
-  analogWrite(FPpin, RPMcmdin);      
 }
 
 // Rough start sequence, needs work with fuel pump and handoff to RUN function
 void StartSEQ(){
-  //RUNstarter(int); FUELvalve(int); RUNfuel(int);
-  RUNstarter(77); //Start the engine at 2500 RPM
-  FUELvalve(1); //This will be the pilot light fuel solenoid on the real system.
-  RUNfuel(15); // Start the fuel pump to push just a little fuel through the ignition system
-  int egt = GetEGT(); //Read EGT 
-  for (int i = 0; i<100;i++){
-      if(egt>120){
-        FUELvalve(1); //This will be the main fuel valve for the injectors
-        RUNstarter(120);
-          for(int j = 15; j < 100; j++){ //ramp up the fuel pump slowly
-            RUNfuel(j);
-            delay(50); //ramp rate delay
-          }
-          RUNfuel(100);
-          RUNstarter(70);          
-          delay(5000);
-      }else{
-        delay (100);
-        egt = GetEGT(); //Read EGT // if EGT <120 read again 
-      }
-  }
+  RPMcmdin = 82;
+  Starter(82);
+  delay(10000);
+  Starter(60);
+  delay(5000);
+  FUELvalve(1);
+  Ignition(1);
+  //FuelPump(20);
+  delay(5000);
+  EngineRUN();
 }
 
 void ShutdownSEQ(){
   FUELvalve(0); //Shut the fuel valve
-  RUNfuel(0);   //Turn off the fuel pump
+  FuelPump(0);   //Turn off the fuel pump
   int egt = GetEGT(); //Read EGT 
   if(egt>120){
-    RUNstarter(77); 
-    delay(2000);
-    RUNstarter(0);
-    delay(2000); 
+    Starter(85); 
+    delay(5000);
+    Starter(0);
+    delay(5000); 
     ShutdownSEQ();
   }else{
-    RUNstarter(0);
+    Starter(0);
+    FuelPump(0);
+    FUELvalve(0);
+    Ignition(0);
     return;
   }
+}
+
+void EngineRUN(){
+  if (RPMcmdin == 0){
+    ShutdownSEQ();
+  }else if (RUNStatus == 2){
+   Starter(RPMcmdin);
+   //FuelPump(20);
+ }
 }
 
 // Only measures HIGH pulse width and sends value back to ECU for computation. 
@@ -115,15 +117,16 @@ int GetEGT(){
   return (egt);
 }
 
-// Run values need to be calibrated at 8.4V, need min 10A supply.
-int RUNstarter(int STRin){
-  //2500RPM = 77PWM, 5000RPM = 120PWM Heating of motor is a concern at 12.6V
+// Run values need to be calibrated at 8.4V, need min 11.4A supply.
+int Starter(int STRin){
+  //2500RPM = 82PWM, 5000RPM = ???PWM Need to verify on Battery 
   analogWrite(STRpin, STRin);
+  return;
 }
 
-int RUNfuel(int FP){
-  //Runs on 12.6V now, consider lower voltage for better resolution
+int FuelPump(int FP){
   analogWrite(FPpin, FP);
+  return;
 }
 
 int FUELvalve(int pos){
@@ -134,3 +137,12 @@ int FUELvalve(int pos){
     digitalWrite(FVpin, LOW);
   }
 }
+
+int Ignition(int i){
+  if (i == 1){
+    digitalWrite(IGpin, HIGH);
+  }else{
+    digitalWrite(IGpin, LOW);
+  }
+}
+
