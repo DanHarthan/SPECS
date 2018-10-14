@@ -12,18 +12,25 @@ void setup(){
 }
 
 void loop(){
-  if(RUNStatus == 0){
-    //CMDstart();
+  char RPMcmd;
+  if(Serial.available()>0){
+    while(Serial.available()>0){
+      RPMcmd = Serial.read();
+    
+      WriteData(RPMcmd);
+      Serial.print(RPMcmd);
+    }
   }
-  int RPMcmd = 0; 
-  WriteData(RPMcmd);
   ReadDATA();
-  delay(150);
+  delay(200);
 }
 
 int WriteData(int x){
+  byte CMDarray[2];
+  CMDarray[0] = (x >> 8) & 0xFF;
+  CMDarray[1] = x & 0xFF;
   Wire.beginTransmission(8); // transmit to device #8
-  Wire.write(x);              // sends one byte
+  Wire.write(CMDarray,2); 
   Wire.endTransmission();    // stop transmitting
 }
 
@@ -36,12 +43,12 @@ void ReadDATA(){
     byte rpmL = Wire.read(); 
     int egt = Wire.read(); 
     int cmd = Wire.read();
-    int rpm = rpmH;
+    unsigned long rpm = rpmH;
     rpm  = (rpm<<8)|rpmM;
     rpm  = (rpm<<8)|rpmL;    
     // In RPM will work for 500 - 99999 RPM (get negative values below 500 due to data rollover)
-    //(will switch to KRPM later, better resolution for calibration)
-    rpm = 26086956/rpm; // value compensation for microsec & duty cycle compressed data format
+    //(will switch to KRPM later, better resolution for calibration ***need to redo after sensor move***)
+    rpm = 26086956/rpm; // value compensation for microsec & duty cycle compressed data format 26086956
     LCD(rpm,egt,cmd);
   }
 }
@@ -68,14 +75,4 @@ void LCD(int rpm, int egt, int cmd){
   lcd.print(cmd);
 }
 
-//Start command to ECM, automatically enters StartSEQ
-int CMDstart(){
-  char x = 's';
-  char y = 'B';
-  Serial.print(x);
-  Wire.beginTransmission(8); // transmit to device #8
-  Wire.write(x);              // sends one byte
-  Wire.write(y);              // sends one byte
-  Wire.endTransmission();    // stop transmitting
-  RUNStatus = 1;
-}
+
